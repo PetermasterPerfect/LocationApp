@@ -1,3 +1,21 @@
 <resources>
     <string name="app_name">LocationTracer</string>
+    <string name="name">LocationTracker</string>
+    <string name="loginText">Login:</string>
+    <string name="passwordText">Password:</string>
+    <string name="loginTextField">Your login</string>
+    <string name="buttonLogIn">Log in</string>
+    <string name="buttonRegister">Create an account!</string>
+    <string name="createLoginText">Please input your login:</string>
+    <string name="createPassword">Please input your password:</string>
+    <string name="buttonSignUp">Sign up</string>
+    <string name="backToLoginText">Already have an account? Sign in.</string>
+    <string name="yourDevicesText">Your devices and their locations:</string>
+    <string name="addDeviceText">Add This Device</string>
+    <string name="informationText"><![CDATA[<b>Add device to the tracking app.</b> <br/><br/>Please choose a name for this device.
+        The device with its chosen name will appear in your device overview alongside other added devices]]></string>
+    <string name="deviceNameText">Input your device name:</string>
+    <string name="deviceNameHint">Device Name</string>
+    <string name="buttonCreateDevice">Add device to your devices</string>
+    <string name="buttonReturn">Return to devices</string>
 </resources>
