@@ -55,7 +55,8 @@ class LoginActivity : AppCompatActivity() {
         Log.d("LoginActivity", "Password: $password")
 
         //TODO: implement login functionality
-        val correctLogin = false
+        val correctLogin = login == "dev"
+
         if (correctLogin){
             val intent = Intent(this@LoginActivity, MainActivity::class.java)
             startActivity(intent)
