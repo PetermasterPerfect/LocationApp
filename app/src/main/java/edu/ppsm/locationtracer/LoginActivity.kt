@@ -51,17 +51,15 @@ class LoginActivity : AppCompatActivity() {
 
     private fun login(login: String, password: String){
         errorText = findViewById(R.id.errorText)
-
-
-        //TODO: implement login functionality
         Log.d("LoginActivity", "Login: $login")
         Log.d("LoginActivity", "Password: $password")
 
+        //TODO: implement login functionality
         val correctLogin = false
-
         if (correctLogin){
             val intent = Intent(this@LoginActivity, MainActivity::class.java)
             startActivity(intent)
+            finish()
         }else{
             errorText?.text = "Incorrect login or password, please try again!"
             errorText?.visibility = View.VISIBLE

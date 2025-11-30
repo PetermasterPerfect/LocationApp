@@ -6,4 +6,8 @@
     <string name="loginTextField">Your login</string>
     <string name="buttonLogIn">Log in</string>
     <string name="buttonRegister">Create an account!</string>
+    <string name="createLoginText">Please input your login:</string>
+    <string name="createPassword">Please input your password:</string>
+    <string name="buttonSignUp">Sign up</string>
+    <string name="backToLoginText">Already have an account? Sign in.</string>
 </resources>
