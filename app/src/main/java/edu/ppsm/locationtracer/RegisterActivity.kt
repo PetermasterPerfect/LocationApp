@@ -44,6 +44,7 @@ class RegisterActivity : AppCompatActivity() {
 
             if (login.isEmpty() || password.isEmpty()) {
                 errorText?.text = "Please enter both login and password!"
+                //TODO: hide error text again after passing correct credentials
                 errorText?.visibility = View.VISIBLE
             }else{
                 createAccount(login, password)
