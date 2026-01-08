@@ -6,8 +6,11 @@ ktor:
         port: 8080
 jwt:
   domain: "https://jwt-provider-domain/"
-  audience: "jwt-audience"
-  realm: "ktor sample app"
+  issuer: "http://localhost:8080"
+  audience: "http://localhost:8080/audience"
+  realm: "locationapp"
+  privateKey: ${jwt_pk}
+  publicKey: ${jwt_Pk}
 postgres:
   url: "jdbc:postgresql://localhost/default"
   user: username
