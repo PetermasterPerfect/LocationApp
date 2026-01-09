@@ -5,13 +5,12 @@ ktor:
     deployment:
         port: 8080
 jwt:
-  domain: "https://jwt-provider-domain/"
-  issuer: "http://localhost:8080"
-  audience: "http://localhost:8080/audience"
+  issuer: "http://0.0.0.0:8080"
+  audience: "http://0.0.0.0:8080/audience"
   realm: "locationapp"
   privateKey: ${jwt_pk}
   publicKey: ${jwt_Pk}
 postgres:
-  url: "jdbc:postgresql://localhost/default"
+  url: ${postgres_url}
   user: ${postgres_user}
   password: ${postgres_pass}
