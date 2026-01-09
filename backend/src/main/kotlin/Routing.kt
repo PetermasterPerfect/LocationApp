@@ -33,7 +33,7 @@ import java.util.Date
 import java.util.concurrent.TimeUnit
 
 object Users : IntIdTable("users") {
-    val email = varchar("email", 255)
+    val login = varchar("login", 255)
     val passwordHash = varchar("password_hash", 255)
     val createdAt = datetime("created_at")
 }
@@ -58,8 +58,8 @@ fun hashPassword(password: String): String = BCrypt.withDefaults().hashToString(
 
 fun verifyPassword(password: CharArray, hashed: CharArray): Boolean = BCrypt.verifyer().verify(password, hashed).verified
 
-fun getUserByEmail(email: String): ResultRow? = transaction {
-    Users.select { Users.email eq email }.singleOrNull()
+fun getUserByEmail(login: String): ResultRow? = transaction {
+    Users.select { Users.login eq login }.singleOrNull()
 }
 
 fun getDevicesByUser(userId: Int): List<ResultRow> = transaction {
@@ -112,24 +112,27 @@ fun Application.configureRouting() {
 
 
     routing {
+	get("/") {
+                call.respond(HttpStatusCode.OK)
+	}
         post("/signup") {
 
-            val email = call.request.queryParameters["email"] ?: ""
+            val login = call.request.queryParameters["login"] ?: ""
             val password = call.request.queryParameters["password"] ?: ""
 
-            if (email.isNullOrBlank() || password.isNullOrBlank()) {
+            if (login.isNullOrBlank() || password.isNullOrBlank()) {
                 call.respond(HttpStatusCode.BadRequest, "Email or password cannot be empty")
                 return@post
             }
 
-            if (getUserByEmail(email) != null) {
+            if (getUserByEmail(login) != null) {
                 call.respond(HttpStatusCode.Conflict, "Email already exists")
                 return@post
             }
 
             transaction {
                 Users.insert {
-                    it[Users.email] = email
+                    it[Users.login] = login
                     it[Users.passwordHash] = hashPassword(password)
                     it[Users.createdAt] = LocalDateTime.now()
                 }
@@ -139,15 +142,15 @@ fun Application.configureRouting() {
         }
 
         post("/login") {
-            val email = call.request.queryParameters["email"] ?: ""
+            val login = call.request.queryParameters["login"] ?: ""
             val password = call.request.queryParameters["password"] ?: ""
 
-            if (email.isNullOrBlank() || password.isNullOrBlank()) {
+            if (login.isNullOrBlank() || password.isNullOrBlank()) {
                 call.respond(HttpStatusCode.BadRequest, "Email or password cannot be empty")
                 return@post
             }
 
-            val user = getUserByEmail(email)
+            val user = getUserByEmail(login)
 
             if (user == null) {
                 call.respond(HttpStatusCode.Unauthorized, "Incorrect login or password")
