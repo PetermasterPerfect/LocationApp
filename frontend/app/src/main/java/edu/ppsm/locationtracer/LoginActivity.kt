@@ -13,6 +13,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONObject
 import java.net.URLEncoder
 import kotlin.concurrent.thread
 
@@ -64,12 +65,13 @@ class LoginActivity : AppCompatActivity() {
         val request = Request.Builder()
             .url(url)
             .post(okhttp3.internal.EMPTY_REQUEST)
+            .addHeader("Accept", "application/json")
             .build()
-
 
         thread {
             try {
                 client.newCall(request).execute().use { response ->
+                    val body = response.body?.string()
                     runOnUiThread {
                         when (response.code) {
                             201, 200 -> {
@@ -78,6 +80,8 @@ class LoginActivity : AppCompatActivity() {
                                     "Successful login",
                                     Toast.LENGTH_SHORT
                                 ).show()
+                                val token = JSONObject(body).getString("token")
+                                JwtManager.saveJwt(this, token)
                                 val intent = Intent(this@LoginActivity, MainActivity::class.java)
                                 startActivity(intent)
                                 finish()

@@ -14,11 +14,11 @@
         android:layout_gravity="center"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="24dp"
-        android:layout_marginBottom="32dp"
+        android:layout_marginBottom="39dp"
         android:text="@string/name"
         android:textColor="@color/black"
         android:textSize="34sp"
-        app:layout_constraintBottom_toTopOf="@id/textView2"
+        app:layout_constraintBottom_toTopOf="@+id/devicesSpinner"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/imageCompass2"
         app:layout_constraintTop_toBottomOf="@+id/buttonAddDevice" />
@@ -34,6 +34,7 @@
         app:layout_constraintEnd_toStartOf="@+id/textAppName"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/buttonAddDevice"
+        app:layout_constraintVertical_bias="0.0"
         app:srcCompat="@drawable/compass" />
 
     <TextView
@@ -41,12 +42,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
+        android:layout_marginTop="24dp"
         android:text="@string/yourDevicesText"
         app:layout_constraintBottom_toTopOf="@+id/devicesView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/imageCompass2" />
+        app:layout_constraintTop_toBottomOf="@+id/devicesSpinner" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/devicesView"
@@ -58,6 +60,7 @@
         android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/textView2" />
 
@@ -70,7 +73,42 @@
         android:textColor="@color/black"
         app:layout_constraintBottom_toTopOf="@+id/textAppName"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.95"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/buttonTrace"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Spinner
+        android:id="@+id/devicesSpinner"
+        android:layout_width="409dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        app:layout_constraintBottom_toTopOf="@+id/textView2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageCompass2" />
+
+    <Button
+        android:id="@+id/buttonTrace"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="41dp"
+        android:layout_marginBottom="8dp"
+        android:backgroundTint="#A02C2C"
+        android:text="@string/buttonStart"
+        app:layout_constraintBottom_toTopOf="@+id/textAppName"
+        app:layout_constraintEnd_toStartOf="@+id/buttonAddDevice"
+        app:layout_constraintStart_toEndOf="@+id/buttonSignout" />
+
+    <Button
+        android:id="@+id/buttonSignout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="1dp"
+        android:backgroundTint="#6C6CD5"
+        android:text="@string/buttonSignout"
+        app:layout_constraintBottom_toTopOf="@+id/textAppName"
+        app:layout_constraintEnd_toStartOf="@+id/buttonTrace"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
 </androidx.constraintlayout.widget.ConstraintLayout>

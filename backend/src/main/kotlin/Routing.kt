@@ -33,7 +33,7 @@ import java.util.Date
 import java.util.concurrent.TimeUnit
 
 object Users : IntIdTable("users") {
-    val login = varchar("login", 255)
+    val login = varchar("email", 255)
     val passwordHash = varchar("password_hash", 255)
     val createdAt = datetime("created_at")
 }
