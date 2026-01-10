@@ -6,10 +6,15 @@ import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.net.URLEncoder
+import kotlin.concurrent.thread
 
 class LoginActivity : AppCompatActivity() {
 
@@ -51,20 +56,54 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun login(login: String, password: String){
-        errorText = findViewById(R.id.errorText)
-        Log.d("LoginActivity", "Login: $login")
-        Log.d("LoginActivity", "Password: $password")
+        val client = OkHttpClient()
 
-        //TODO: implement login functionality
-        val correctLogin = login == "dev"
+        val encodedLogin = URLEncoder.encode(login, "UTF-8")
+        val encodedPassword = URLEncoder.encode(password, "UTF-8")
+        val url = getResources().getString(R.string.URL) + "/login?login=$encodedLogin&password=$encodedPassword"
+        val request = Request.Builder()
+            .url(url)
+            .post(okhttp3.internal.EMPTY_REQUEST)
+            .build()
 
-        if (correctLogin){
-            val intent = Intent(this@LoginActivity, MainActivity::class.java)
-            startActivity(intent)
-            finish()
-        }else{
-            errorText?.text = "Incorrect login or password, please try again!"
-            errorText?.visibility = View.VISIBLE
+
+        thread {
+            try {
+                client.newCall(request).execute().use { response ->
+                    runOnUiThread {
+                        when (response.code) {
+                            201, 200 -> {
+                                Toast.makeText(
+                                    this@LoginActivity,
+                                    "Successful login",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                val intent = Intent(this@LoginActivity, MainActivity::class.java)
+                                startActivity(intent)
+                                finish()
+                            }
+
+                            400 -> {
+                                Toast.makeText(
+                                    this@LoginActivity,
+                                    response.message,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                            401 -> {
+                                Toast.makeText(
+                                    this@LoginActivity,
+                                    response.message,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                println("Error!!!! : $e")
+            }
         }
     }
 }

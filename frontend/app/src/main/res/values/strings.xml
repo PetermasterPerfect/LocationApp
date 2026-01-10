@@ -18,4 +18,5 @@
     <string name="deviceNameHint">Device Name</string>
     <string name="buttonCreateDevice">Add device to your devices</string>
     <string name="buttonReturn">Return to devices</string>
+    <string name="URL">http://ec2-16-170-234-199.eu-north-1.compute.amazonaws.com:8080</string>
 </resources>

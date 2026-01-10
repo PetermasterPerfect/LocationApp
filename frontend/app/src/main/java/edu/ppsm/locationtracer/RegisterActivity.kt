@@ -1,14 +1,21 @@
 package edu.ppsm.locationtracer
 
+import android.content.Intent
 import android.graphics.Paint
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.net.URLEncoder
+import kotlin.concurrent.thread
+
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -53,7 +60,55 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun createAccount(login: String, password: String){
-        //TODO: Implement account creation
+        val client = OkHttpClient()
+
+        val encodedLogin = URLEncoder.encode(login, "UTF-8")
+        val encodedPassword = URLEncoder.encode(password, "UTF-8")
+        val url = getResources().getString(R.string.URL) + "/signup?login=$encodedLogin&password=$encodedPassword"
+        val request = Request.Builder()
+            .url(url)
+            .post(okhttp3.internal.EMPTY_REQUEST)
+            .build()
+
+
+        thread {
+            try {
+                client.newCall(request).execute().use { response ->
+                    runOnUiThread {
+                        when (response.code) {
+                            201, 200 -> {
+                                Toast.makeText(
+                                    this@RegisterActivity,
+                                    "Successful signup",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                finish()
+                            }
+
+                            409 -> {
+                                Toast.makeText(
+                                    this@RegisterActivity,
+                                    "Such login already exists",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                            else -> {
+                                Toast.makeText(
+                                    this@RegisterActivity,
+                                    "Error: ${response.code}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                println("Error!!!! : $e")
+            }
+        }
+
+
     }
 
 }
