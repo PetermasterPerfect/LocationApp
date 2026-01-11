@@ -7,6 +7,8 @@
     android:layout_height="wrap_content"
     tools:context=".MainActivity">
 
+
+
     <TextView
         android:id="@+id/textAppName"
         android:layout_width="wrap_content"
@@ -28,41 +30,25 @@
         android:layout_width="74dp"
         android:layout_height="74dp"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="32dp"
         android:scaleType="fitStart"
-        app:layout_constraintBottom_toTopOf="@id/textView2"
         app:layout_constraintEnd_toStartOf="@+id/textAppName"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/buttonAddDevice"
-        app:layout_constraintVertical_bias="0.0"
         app:srcCompat="@drawable/compass" />
-
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="10dp"
-        android:text="@string/yourDevicesText"
-        app:layout_constraintBottom_toTopOf="@+id/pointsView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/devicesSpinner" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/pointsView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="5dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="20dp"
+        app:layout_constraintBottom_toTopOf="@+id/mapView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.515"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textView2" />
+        app:layout_constraintTop_toBottomOf="@+id/devicesSpinner" />
 
     <Button
         android:id="@+id/buttonAddDevice"
@@ -81,8 +67,8 @@
         android:layout_width="409dp"
         android:layout_height="50dp"
         android:layout_marginTop="10dp"
-        android:layout_marginBottom="1dp"
-        app:layout_constraintBottom_toTopOf="@+id/textView2"
+        android:layout_marginBottom="30dp"
+        app:layout_constraintBottom_toTopOf="@+id/pointsView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imageCompass2" />
@@ -114,13 +100,5 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0" />
 
-    <com.google.android.gms.maps.MapView
-        android:id="@+id/mapView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/pointsView" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

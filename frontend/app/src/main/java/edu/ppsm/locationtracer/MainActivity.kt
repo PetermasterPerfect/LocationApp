@@ -10,6 +10,7 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.Spinner
@@ -23,6 +24,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
@@ -60,10 +65,11 @@ class SpinnerAdapter (
     public val devices = devices
 }
 
-class MainActivity : AppCompatActivity(), LocationListenerCompat {
+class MainActivity : AppCompatActivity(), LocationListenerCompat, OnMapReadyCallback {
     private var locMan: LocationManager? = null
     private var tracing = false
 
+    private var mapView: MapView? = null
     private var deviceView: RecyclerView? = null
     private var devicesSpinner: Spinner? = null
     private var addDeviceButton: Button? = null
@@ -249,6 +255,9 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat {
             insets
         }
 
+        //val mapFragment = supportFragmentManager.findFragmentById(R.id.mapView) as? SupportMapFragment
+        //mapFragment?.getMapAsync(this)
+
         locMan = getSystemService(LOCATION_SERVICE) as LocationManager
         addDeviceButton = findViewById<Button>(R.id.buttonAddDevice)
         devicesSpinner = findViewById<Spinner>(R.id.devicesSpinner)
@@ -265,6 +274,26 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat {
             JwtManager.clearJwt(this)
             val intent = Intent(this@MainActivity, LoginActivity::class.java)
             startActivity(intent)
+        }
+
+        devicesSpinner?.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+
+            override fun onItemSelected(
+                parent: AdapterView<*>,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                val adapter = devicesSpinner?.adapter as SpinnerAdapter
+                val idx = devicesSpinner?.selectedItemPosition
+                if (idx != null) {
+                    val curUuid = adapter.devices[idx].uuid
+                    getPoints(curUuid)
+                }
+
+            }
+            override fun onNothingSelected(parent: AdapterView<*>) {
+            }
         }
 
         traceButton?.setOnClickListener {
@@ -323,6 +352,10 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat {
                 getPoints(curUuid)
             }
         }
+    }
+
+    override fun onMapReady(p0: GoogleMap) {
+        TODO("Not yet implemented")
     }
 
 
