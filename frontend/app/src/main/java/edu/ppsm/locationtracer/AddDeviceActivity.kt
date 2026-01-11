@@ -13,6 +13,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.HtmlCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.fingerprintjs.android.fingerprint.Fingerprinter
+import com.fingerprintjs.android.fingerprint.FingerprinterFactory
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.net.URLEncoder
@@ -95,8 +97,14 @@ class AddDeviceActivity : AppCompatActivity() {
         editDevice = findViewById(R.id.editDeviceName)
 
         findViewById<View>(R.id.buttonCreateDevice).setOnClickListener{
-            addDevice( UUID.nameUUIDFromBytes(Settings.Secure.ANDROID_ID.toByteArray()).toString(), editDevice?.getText().toString())
-            finish()
+            val fingerprinter = FingerprinterFactory.create(this)
+
+            fingerprinter.getFingerprint(version = Fingerprinter.Version.V_5) { fingerprint ->
+                val curUuid = UUID.nameUUIDFromBytes(fingerprint.toByteArray()).toString()
+                addDevice( curUuid, editDevice?.getText().toString())
+                finish()
+            }
+
         }
     }
 }

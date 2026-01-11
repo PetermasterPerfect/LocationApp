@@ -10,7 +10,6 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.Spinner
@@ -24,6 +23,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.fingerprintjs.android.fingerprint.Fingerprinter
+import com.fingerprintjs.android.fingerprint.FingerprinterFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -65,11 +66,11 @@ class SpinnerAdapter (
     public val devices = devices
 }
 
-class MainActivity : AppCompatActivity(), LocationListenerCompat, OnMapReadyCallback {
+class MainActivity : AppCompatActivity(), LocationListenerCompat {
     private var locMan: LocationManager? = null
     private var tracing = false
+    var curUuid: String = ""
 
-    private var mapView: MapView? = null
     private var deviceView: RecyclerView? = null
     private var devicesSpinner: Spinner? = null
     private var addDeviceButton: Button? = null
@@ -185,14 +186,9 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat, OnMapReadyCall
     }
     private fun updateDevicesWidgets(devices: List<UuidAndName>) {
 
-        val deviceUuid = UUID.nameUUIDFromBytes(Settings.Secure.ANDROID_ID.toByteArray()).toString()
-        if(devices.isEmpty())
+        if(!devices.map{it.uuid}.contains(curUuid))
             traceButton?.setEnabled(false)
 
-        for(device in devices) {
-            if(device.uuid == deviceUuid)
-                addDeviceButton?.setEnabled(false)
-        }
         val spinnerAdapter = SpinnerAdapter(
             this,
             devices
@@ -262,8 +258,13 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat, OnMapReadyCall
         addDeviceButton = findViewById<Button>(R.id.buttonAddDevice)
         devicesSpinner = findViewById<Spinner>(R.id.devicesSpinner)
         traceButton = findViewById<Button>(R.id.buttonTrace)
-        getDevices()
 
+        val fingerprinter = FingerprinterFactory.create(this)
+
+        fingerprinter.getFingerprint(version = Fingerprinter.Version.V_5) { fingerprint ->
+            curUuid = UUID.nameUUIDFromBytes(fingerprint.toByteArray()).toString()
+            getDevices()
+        }
         //TODO:Check if current device is already on list. May want to unhide the button if it's not or create a error text information
         addDeviceButton?.setOnClickListener {
             val intent = Intent(this@MainActivity, AddDeviceActivity::class.java)
@@ -274,26 +275,6 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat, OnMapReadyCall
             JwtManager.clearJwt(this)
             val intent = Intent(this@MainActivity, LoginActivity::class.java)
             startActivity(intent)
-        }
-
-        devicesSpinner?.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-
-            override fun onItemSelected(
-                parent: AdapterView<*>,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                val adapter = devicesSpinner?.adapter as SpinnerAdapter
-                val idx = devicesSpinner?.selectedItemPosition
-                if (idx != null) {
-                    val curUuid = adapter.devices[idx].uuid
-                    getPoints(curUuid)
-                }
-
-            }
-            override fun onNothingSelected(parent: AdapterView<*>) {
-            }
         }
 
         traceButton?.setOnClickListener {
@@ -344,18 +325,10 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat, OnMapReadyCall
             PackageManager.PERMISSION_GRANTED) {
             println("location changed")
 
-            val adapter = devicesSpinner?.adapter as SpinnerAdapter
-            val idx = devicesSpinner?.selectedItemPosition
-            if (idx != null) {
-                val curUuid = adapter.devices[idx].uuid
-                reportLocation(curUuid, location.longitude, location.latitude, location.time)
-                getPoints(curUuid)
-            }
-        }
-    }
+            reportLocation(curUuid, location.longitude, location.latitude, location.time)
+            getPoints(curUuid)
 
-    override fun onMapReady(p0: GoogleMap) {
-        TODO("Not yet implemented")
+        }
     }
 
 
