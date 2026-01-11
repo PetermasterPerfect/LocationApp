@@ -22,4 +22,6 @@
     <string name="buttonStop">STOP</string>
     <string name="buttonSignout">Sign out</string>
     <string name="URL">http://ec2-16-170-234-199.eu-north-1.compute.amazonaws.com:8080</string>
+    <string name="noPermission">No permission to read GPS location!</string>
+    <string name="permissionGranted">Permission granted</string>
 </resources>
