@@ -31,6 +31,8 @@ import java.time.format.DateTimeParseException
 import java.util.Base64
 import java.util.Date
 import java.util.concurrent.TimeUnit
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.transactions.transaction
 
 object Users : IntIdTable("users") {
     val login = varchar("email", 255)
@@ -171,7 +173,7 @@ fun Application.configureRouting() {
                 .withIssuer(issuer)
                 .withClaim("userid", user[Users.id].toString())
                 .withKeyId("6f8856ed-9189-488f-9011-0ff4b6c08edc")
-                .withExpiresAt(Date(System.currentTimeMillis() + 60000))
+                .withExpiresAt(Date(System.currentTimeMillis() + 600000))
                 .sign(Algorithm.RSA256(publicKey, privateKey))
 
             println("token = $token")
@@ -424,7 +426,58 @@ fun Application.configureRouting() {
                 }
                 call.respond(HttpStatusCode.Created, "Location saved")
             }
+
+delete("/gpsdelete") {
+    val principal = call.principal<JWTPrincipal>()
+        ?: return@delete call.respond(HttpStatusCode.Unauthorized)
+
+    val userId = principal.payload
+        .getClaim("userid")
+        .asString()
+        .toInt()
+
+    val uuid = call.request.queryParameters["uuid"] ?: ""
+    val locationId = call.request.queryParameters["id"]?.toIntOrNull()
+
+    if (uuid.isBlank()) {
+        call.respond(HttpStatusCode.BadRequest, "Device UUID is required")
+        return@delete
+    }
+
+    if (locationId == null) {
+        call.respond(HttpStatusCode.BadRequest, "Location id is required")
+        return@delete
+    }
+
+    val deviceId = transaction {
+        Devices.select {
+            (Devices.userId eq userId) and
+            (Devices.deviceUuid eq uuid)
+        }.map { it[Devices.id].value }.singleOrNull()
+    }
+
+    if (deviceId == null) {
+        call.respond(HttpStatusCode.NotFound, "No such device")
+        return@delete
+    }
+
+    val deletedRows = transaction {
+        Locations.deleteWhere {
+            (Locations.id eq locationId) and
+            (Locations.deviceId eq deviceId) and
+            (Locations.userId eq userId)
         }
+    }
+
+    if (deletedRows == 0) {
+        call.respond(HttpStatusCode.NotFound, "Location not found")
+    } else {
+        call.respond(HttpStatusCode.OK, "Location deleted")
+    }
+}
+
+	}
+
         staticFiles("/.well-known", File("certs")) {
             default("jwks.json")
         }
