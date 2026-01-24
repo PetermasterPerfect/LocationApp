@@ -2,12 +2,17 @@ package edu.ppsm.locationtracer
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.view.View
 import android.widget.ArrayAdapter
@@ -16,6 +21,7 @@ import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.location.LocationListenerCompat
@@ -35,9 +41,6 @@ import com.google.gson.reflect.TypeToken
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.net.URLEncoder
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import java.util.UUID
 import kotlin.concurrent.thread
 
@@ -66,7 +69,7 @@ class SpinnerAdapter (
     public val devices = devices
 }
 
-class MainActivity : AppCompatActivity(), LocationListenerCompat {
+class MainActivity : AppCompatActivity() {
     private var locMan: LocationManager? = null
     private var tracing = false
     var curUuid: String = ""
@@ -84,6 +87,52 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat {
     private var pointsAdapter: RecyclerViewAdapter? = null
     private var pointsView: RecyclerView? = null
 
+    private val refreshIntervalMs = 1_000L
+    private val handler = Handler(Looper.getMainLooper())
+    private var refreshRunnable: Runnable? = null
+
+    private fun startAutoRefresh() {
+        if (refreshRunnable != null) return
+
+        refreshRunnable = Runnable {
+            getDevices();
+            if(devicesSpinner?.adapter != null) {
+                val adapter = devicesSpinner?.adapter as SpinnerAdapter
+                val idx = devicesSpinner?.selectedItemPosition
+                if (idx != null) {
+                    val curUuid = adapter.devices[idx].uuid
+                    getPoints(curUuid)
+                }
+            }
+            handler.postDelayed(refreshRunnable!!, refreshIntervalMs)
+        }
+
+        handler.post(refreshRunnable!!)
+    }
+
+    private fun stopAutoRefresh() {
+        refreshRunnable?.let {
+            handler.removeCallbacks(it)
+        }
+        refreshRunnable = null
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val fingerprinter = FingerprinterFactory.create(this)
+
+        fingerprinter.getFingerprint(version = Fingerprinter.Version.V_5) { fingerprint ->
+             this.curUuid = UUID.nameUUIDFromBytes(fingerprint.toByteArray()).toString()
+            getDevices()
+        }
+        startAutoRefresh()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        stopAutoRefresh()
+    }
+
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
         if (isGranted) {
@@ -99,45 +148,6 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat {
         }
     }
 
-    private fun reportLocation(devUuid: String, lon: Double, lat: Double, time: Long) {
-        val token = JwtManager.getJwt(this)
-        val client = OkHttpClient()
-
-        val encodedUuid = URLEncoder.encode(devUuid, "UTF-8")
-        val encodedLon = URLEncoder.encode(lon.toString(), "UTF-8")
-        val encodedLat = URLEncoder.encode(lat.toString(), "UTF-8")
-
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        val formatted = sdf.format(Date(time))
-
-        val encodedTime = URLEncoder.encode(formatted.toString(), "UTF-8")
-        val url = getString(R.string.URL) + "/gps?uuid=$encodedUuid&longitude=$encodedLon&latitude=$encodedLat&time=$encodedTime"
-        val request = Request.Builder()
-            .url(url)
-            .post(okhttp3.internal.EMPTY_REQUEST)
-            .addHeader("Authorization", "Bearer $token")
-            .addHeader("Accept", "application/json")
-            .build()
-
-        thread {
-            try {
-                client.newCall(request).execute().use { response ->
-                    runOnUiThread {
-                        when (response.code) {
-                            200, 201 -> {
-                                println("Added $lon | $lat")
-                            }
-                            else -> {
-                                println("$response.code : $response.message")
-                            }
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                println("Error: $e")
-            }
-        }
-    }
 
     private fun updatePointsWidgets(points: List<Point>) {
         pointsAdapter = RecyclerViewAdapter(this, points)
@@ -171,7 +181,8 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat {
                                 val gson = Gson()
                                 val listType = object : TypeToken<List<Point>>() {}.type
                                 val ret = gson.fromJson<List<Point>>(body, listType)
-                                updatePointsWidgets(ret)
+                                //if(!ret.isEmpty())
+                                    updatePointsWidgets(ret)
                             }
                             else -> {
                                 Toast.makeText(this@MainActivity, response.message, Toast.LENGTH_SHORT).show()
@@ -188,20 +199,29 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat {
 
         if(!devices.map{it.uuid}.contains(curUuid))
             traceButton?.setEnabled(false)
+        else
+            traceButton?.setEnabled(true)
 
+        var selectedIdx: Int?
+        if(devicesSpinner?.adapter == null)
+             selectedIdx = 0
+        else
+            selectedIdx = devicesSpinner?.selectedItemPosition
         val spinnerAdapter = SpinnerAdapter(
-            this,
-            devices
-        )
+                this,
+                devices
+            )
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         devicesSpinner?.adapter = spinnerAdapter
         spinnerAdapter.notifyDataSetChanged()
 
-        val idx = devicesSpinner?.selectedItemPosition
-        if (idx != null) {
-            val curUuid = spinnerAdapter.devices[idx].uuid
+        if (selectedIdx != null) {
+            devicesSpinner?.setSelection(selectedIdx)
+            val curUuid = spinnerAdapter.devices[selectedIdx].uuid
             getPoints(curUuid)
         }
+        //}
+
     }
 
     private fun getDevices() {
@@ -226,7 +246,8 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat {
                                 val gson = Gson()
                                 val listType = object : TypeToken<List<UuidAndName>>() {}.type
                                 val ret = gson.fromJson<List<UuidAndName>>(body, listType)
-                                updateDevicesWidgets(ret)
+                                if(!ret.isEmpty())
+                                    updateDevicesWidgets(ret)
                             }
                             else -> {
                                 Toast.makeText(this@MainActivity, response.message, Toast.LENGTH_SHORT).show()
@@ -240,6 +261,7 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("CutPasteId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -259,12 +281,7 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat {
         devicesSpinner = findViewById<Spinner>(R.id.devicesSpinner)
         traceButton = findViewById<Button>(R.id.buttonTrace)
 
-        val fingerprinter = FingerprinterFactory.create(this)
 
-        fingerprinter.getFingerprint(version = Fingerprinter.Version.V_5) { fingerprint ->
-            curUuid = UUID.nameUUIDFromBytes(fingerprint.toByteArray()).toString()
-            getDevices()
-        }
         //TODO:Check if current device is already on list. May want to unhide the button if it's not or create a error text information
         addDeviceButton?.setOnClickListener {
             val intent = Intent(this@MainActivity, AddDeviceActivity::class.java)
@@ -273,63 +290,82 @@ class MainActivity : AppCompatActivity(), LocationListenerCompat {
 
         findViewById<View>(R.id.buttonSignout)?.setOnClickListener {
             JwtManager.clearJwt(this)
-            val intent = Intent(this@MainActivity, LoginActivity::class.java)
+            var intent = Intent(this, ForegroundLocationService::class.java)
+            intent.action = ForegroundLocationService.ACTION_STOP
+            startService(intent)
+            intent = Intent(this@MainActivity, LoginActivity::class.java)
             startActivity(intent)
         }
 
         traceButton?.setOnClickListener {
-            if(!tracing) {
+            if (!tracing) {
                 if (ActivityCompat.checkSelfPermission(
-                            this,
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        ) !=
-                        PackageManager.PERMISSION_GRANTED &&
-                        ActivityCompat.checkSelfPermission(
-                            this,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                        ) !=
-                        PackageManager.PERMISSION_GRANTED
-                    )
-                        requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-
-                if(ActivityCompat.checkSelfPermission(this,
-                        Manifest.permission.ACCESS_FINE_LOCATION) ==
-                    PackageManager.PERMISSION_GRANTED &&
-                    ActivityCompat.checkSelfPermission(this,
-                        Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                        this,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ) !=
                     PackageManager.PERMISSION_GRANTED)
-                    locMan!!.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000L, 10f, this)
+                        requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                if(ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ) !=
+                    PackageManager.PERMISSION_GRANTED)
+                    requestPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+                if(ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.FOREGROUND_SERVICE_LOCATION
+                    ) !=
+                    PackageManager.PERMISSION_GRANTED)
+                    requestPermissionLauncher.launch(Manifest.permission.FOREGROUND_SERVICE_LOCATION)
+                if(ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.FOREGROUND_SERVICE
+                    ) !=
+                    PackageManager.PERMISSION_GRANTED)
+                    requestPermissionLauncher.launch(Manifest.permission.FOREGROUND_SERVICE)
 
-                findViewById<Button>(R.id.buttonTrace).text = getResources().getString(R.string.buttonStop)
-                tracing = true
+
+
+                if (ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ) ==
+                    PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ) ==
+                    PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.FOREGROUND_SERVICE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.FOREGROUND_SERVICE
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    val intent = Intent(this, ForegroundLocationService::class.java)
+                    intent.action = ForegroundLocationService.ACTION_START
+                    intent.putExtra("uuid", curUuid)
+                    startForegroundService(intent)
+
+                    findViewById<Button>(R.id.buttonTrace).text =
+                        getResources().getString(R.string.buttonStop)
+                    tracing = true
+                }
+
             } else {
-                locMan!!.removeUpdates(this)
-                findViewById<Button>(R.id.buttonTrace).text = getResources().getString(R.string.buttonStart)
+                //locMan!!.removeUpdates(this)
+
+                val intent = Intent(this, ForegroundLocationService::class.java)
+                intent.action = ForegroundLocationService.ACTION_STOP
+                startService(intent)
+                findViewById<Button>(R.id.buttonTrace).text =
+                    getResources().getString(R.string.buttonStart)
                 tracing = false
             }
 
         }
     }
-
-    override fun onLocationChanged(location: Location) {
-        if(tracing &&
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) ==
-            PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) ==
-            PackageManager.PERMISSION_GRANTED) {
-            println("location changed")
-
-            reportLocation(curUuid, location.longitude, location.latitude, location.time)
-            getPoints(curUuid)
-
-        }
-    }
-
-
 }
