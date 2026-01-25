@@ -54,14 +54,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                                         val mark = LatLng(r.lat, r.lon)
                                         if(point == null)
                                             point = mark
-                                        mMap.addMarker(MarkerOptions().position(mark))
+                                        mMap.addMarker(MarkerOptions().position(mark).title(r.time))
                                     }
                                     if(point!=null)
                                         mMap.moveCamera(CameraUpdateFactory.newLatLng(point))
                                 }
-                            }
-                            else -> {
-                                Toast.makeText(this@MapsActivity, response.message, Toast.LENGTH_SHORT).show()
                             }
                         }
                     }

@@ -112,10 +112,13 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     if (diffX < 0) {
                         val selectedIdx = devicesSpinner?.selectedItemPosition
-                        val adapter = devicesSpinner?.adapter as SpinnerAdapter
+
                         var uuid = ""
-                        if(selectedIdx != null) {
-                             uuid = adapter.devices[selectedIdx].uuid
+                        if(devicesSpinner?.adapter != null) {
+                            val adapter = devicesSpinner?.adapter as SpinnerAdapter
+                            if (selectedIdx != null) {
+                                uuid = adapter.devices[selectedIdx].uuid
+                            }
                         }
 
                         val intent = Intent(this@MainActivity, MapsActivity::class.java)
