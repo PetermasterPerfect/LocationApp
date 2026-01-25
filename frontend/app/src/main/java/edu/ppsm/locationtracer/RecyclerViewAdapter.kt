@@ -51,7 +51,7 @@ class RecyclerViewAdapter(context: Context?, private var dataSet: List<Point>) :
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
         viewHolder.textNum.text = (position+1).toString()
         viewHolder.textTime.text = dataSet[position].time
-        viewHolder.textLonLat.text = String.format("%.2f", dataSet[position].lon) + " - " + String.format("%.2f", dataSet[position].lat)
+        viewHolder.textLonLat.text = String.format("Position: (%.2f", dataSet[position].lon) + String.format(" , %.2f)", dataSet[position].lat)
     }
 
     override fun getItemCount() = dataSet.size
