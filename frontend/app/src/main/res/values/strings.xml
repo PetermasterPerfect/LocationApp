@@ -24,4 +24,6 @@
     <string name="URL">http://ec2-16-170-234-199.eu-north-1.compute.amazonaws.com:8080</string>
     <string name="noPermission">No permission to read GPS location!</string>
     <string name="permissionGranted">Permission granted</string>
+    <string name="title_activity_maps">MapsActivity</string>
+    <string name="title_activity_maps2">MapsActivity2</string>
 </resources>

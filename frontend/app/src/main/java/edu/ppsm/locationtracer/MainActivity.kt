@@ -14,6 +14,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -87,10 +89,50 @@ class MainActivity : AppCompatActivity() {
     private var pointsAdapter: RecyclerViewAdapter? = null
     private var pointsView: RecyclerView? = null
 
-    private val refreshIntervalMs = 1_000L
+    private val refreshIntervalMs = 2_000L
     private val handler = Handler(Looper.getMainLooper())
     private var refreshRunnable: Runnable? = null
 
+    private val gestureDetector by lazy {
+        GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+
+            private val SWIPE_THRESHOLD = 100
+            private val SWIPE_VELOCITY_THRESHOLD = 100
+
+            override fun onFling(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+                val diffX = e2.x - (e1?.x ?: 0f)
+
+                if (Math.abs(diffX) > SWIPE_THRESHOLD &&
+                    Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD
+                ) {
+                    if (diffX < 0) {
+                        val selectedIdx = devicesSpinner?.selectedItemPosition
+                        val adapter = devicesSpinner?.adapter as SpinnerAdapter
+                        var uuid = ""
+                        if(selectedIdx != null) {
+                             uuid = adapter.devices[selectedIdx].uuid
+                        }
+
+                        val intent = Intent(this@MainActivity, MapsActivity::class.java)
+                        intent.putExtra("DEVICE_UUID", uuid)
+                        startActivity(intent)
+                    }
+                    return true
+                }
+                return false
+            }
+        })
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        gestureDetector.onTouchEvent(ev)
+        return super.dispatchTouchEvent(ev)
+    }
     private fun startAutoRefresh() {
         if (refreshRunnable != null) return
 
@@ -272,9 +314,6 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
-        //val mapFragment = supportFragmentManager.findFragmentById(R.id.mapView) as? SupportMapFragment
-        //mapFragment?.getMapAsync(this)
 
         locMan = getSystemService(LOCATION_SERVICE) as LocationManager
         addDeviceButton = findViewById<Button>(R.id.buttonAddDevice)
