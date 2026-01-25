@@ -56,7 +56,7 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun login(login: String, password: String){
+    fun login(login: String, password: String){
         val client = OkHttpClient()
 
         val encodedLogin = URLEncoder.encode(login, "UTF-8")
